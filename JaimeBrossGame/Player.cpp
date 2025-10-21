@@ -161,7 +161,7 @@ void Player::set_pos1()
 	lives = 3;
 	gravity = 0;
 	jump = false;
-	animations.player_disp = { 50, 704, 192, 192 };
+	animations.player_disp = { 50, 448, 192, 192 };
 	camera.target = Vector2{ animations.player_disp.x, 580 };
 }
 void Player::set_pos2()
@@ -169,7 +169,7 @@ void Player::set_pos2()
 	hit_timer = 0;
 	gravity = 0;
 	jump = false;
-	animations.player_disp = { 50, 704, 192, 192 };
+	animations.player_disp = { 50, 448, 192, 192 };
 	camera.target = Vector2{ animations.player_disp.x, 580 };
 }
 void Player::set_pos3()
@@ -178,6 +178,6 @@ void Player::set_pos3()
 	gravity = 0;
 	hp = 3;
 	jump = false;
-	animations.player_disp = { 50, 704, 192, 192 };
+	animations.player_disp = { 50, 448, 192, 192 };
 	camera.target = Vector2{ animations.player_disp.x, 580 };
 }

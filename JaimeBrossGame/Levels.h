@@ -125,6 +125,7 @@ public:
 	void game_over_screen(Player& player);
 	void manage_death(Player& player, Enemies& enemies);
 	void reset_music();
+	void init_maps();
 
 	bool CheckCollisionRecsOr(Rectangle rec1, Rectangle rec2, Vector2 origin);
 };
