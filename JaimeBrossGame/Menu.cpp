@@ -31,21 +31,16 @@ void Menu::set_audio_volume()
 
 void Menu::apply_master_volume(Player& player, Levels& level_1, Levels& level_2)
 {
-    // Esta funcion aplica el volumen maestro a TODAS las musicas y sonidos
     SetMasterVolume(master_volume);
     SetMusicVolume(menu_music, master_volume);
     SetMusicVolume(ending_music, master_volume);
-
-    // Aqui nos aseguramos que la musica de los niveles tambien respete el master volume
     SetMusicVolume(level_1.level1_music, master_volume);
     SetMusicVolume(level_2.level2_music, master_volume);
-
     SetSoundVolume(button_sound, master_volume);
     SetSoundVolume(level_1.coin_sound, master_volume);
     SetSoundVolume(level_1.life_up_sound, master_volume);
     SetSoundVolume(level_2.coin_sound, master_volume);
     SetSoundVolume(level_2.life_up_sound, master_volume);
-
     player.jump_volume = master_volume;
     player.hit_volume = master_volume;
     player.death_volume = master_volume;
@@ -77,7 +72,6 @@ void Menu::apply_video_settings()
     int targetH = resolutions[resolution_index].h;
     if (!fullscreen && (GetScreenWidth() != targetW || GetScreenHeight() != targetH))
         SetWindowSize(targetW, targetH);
-    if (show_fps) DrawFPS(10, 10);
 }
 
 void Menu::init_animation()
@@ -190,10 +184,11 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
-    Rectangle panel = { 420, 320, 1080, 640 };
+    Rectangle panel = { 420, 450, 1080, 550 };
     DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
-    DrawTextEx(font, "Settings", Vector2{ panel.x + 40, panel.y + 30 }, 60, 6, BLACK);
+
+    DrawTextEx(font, "Settings", Vector2{ panel.x + 410, panel.y + 30 }, 60, 6, BLACK);
 
     float y = panel.y + 120;
     float xLabel = panel.x + 40;
@@ -202,7 +197,7 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
 
     DrawTextEx(font, "Master Volume", Vector2{ xLabel, y }, 40, 4, BLACK);
     master_volume = SliderHorizontal(Rectangle{ xSlider, y + 50, sliderW, 44 }, master_volume, 0.0f, 1.0f);
-    y += 140;
+    y += 110;
     DrawTextEx(font, TextFormat("Fullscreen (F): %s", fullscreen ? "On" : "Off"), Vector2{ xLabel, y }, 30, 3, BLACK);
     if (IsKeyPressed(KEY_F)) toggle_fullscreen();
     y += 50;
@@ -216,20 +211,18 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     apply_master_volume(player, level_1, level_2);
     apply_video_settings();
 
-    Rectangle backBtn = { panel.x + panel.width / 2 - 200, panel.y + panel.height - 90, 400, 70 };
+    Rectangle backBtn = { panel.x + panel.width / 2 - 280, panel.y + panel.height - 90, 560, 70 };
     DrawRectangleRounded(backBtn, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-    DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 40, backBtn.y + 20 }, 40, 4, BLACK);
+
+    DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 110, backBtn.y + 20 }, 40, 4, BLACK);
 
     if (CheckCollisionPointRec(mouse_pos, backBtn))
     {
         DrawRectangleRounded(backBtn, 0.3f, 0, GRAY);
         DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-        DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 40, backBtn.y + 20 }, 40, 4, BLACK);
+        DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 110, backBtn.y + 20 }, 40, 4, BLACK);
 
-        // FIX: Usamos IsMouseButtonReleased para evitar que el clic "atraviese" el boton
-        // y active algo en el menu principal en el mismo frame.
-        // Ademas activamos la supresion.
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
         {
             settings = false;
@@ -240,7 +233,6 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
 
 void Menu::check_button()
 {
-    // FIX: Si acabamos de salir de settings, no procesamos clics en el menu en este frame
     if (suppress_menu_click_one_frame) {
         suppress_menu_click_one_frame = false;
         return;

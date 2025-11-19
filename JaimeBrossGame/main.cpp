@@ -25,10 +25,8 @@ int main()
 
 	while (!menu.exit_game)
 	{
-		// Music routing: only one context at a time
 		if (!menu.start_game && !level_2.completed)
 		{
-			// Menu context
 			if (!IsMusicStreamPlaying(menu.menu_music)) PlayMusicStream(menu.menu_music);
 			StopMusicStream(level_1.level1_music);
 			StopMusicStream(level_2.level2_music);
@@ -77,9 +75,6 @@ int main()
 			menu.reset_lvl(level_1, level_2);
 			enemies.reset_enemies();
 
-			// FIX: Llamamos a apply_master_volume para aplicar el volumen configurado
-			// a todos los elementos (niveles y jugador) consistentemente.
-			// Se eliminaron las llamadas individuales level_1.set_audio_volume() que reseteaban el volumen.
 			menu.apply_master_volume(player, level_1, level_2);
 		}
 		if (menu.start_game && !level_2.completed)
@@ -144,6 +139,9 @@ int main()
 		}
 		if (level_2.completed)
 			menu.ending(level_1, level_2);
+
+		if (menu.show_fps) DrawFPS(10, 10);
+
 		EndDrawing();
 	}
 
