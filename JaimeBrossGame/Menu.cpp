@@ -7,8 +7,8 @@ static float SliderHorizontal(Rectangle bounds, float value, float minValue, flo
     float t = (value - minValue) / (maxValue - minValue);
     if (t < 0) t = 0; if (t > 1) t = 1;
     const float knobW = 20.0f;
-    Rectangle bar = { bounds.x, bounds.y + bounds.height/2 - 4, bounds.width, 8 };
-    Rectangle knob = { bounds.x + t * (bounds.width - knobW), bounds.y + bounds.height/2 - knobW/2, knobW, knobW };
+    Rectangle bar = { bounds.x, bounds.y + bounds.height / 2 - 4, bounds.width, 8 };
+    Rectangle knob = { bounds.x + t * (bounds.width - knobW), bounds.y + bounds.height / 2 - knobW / 2, knobW, knobW };
     DrawRectangleRounded(bar, 0.4f, 0, LIGHTGRAY);
     DrawRectangleRounded(knob, 0.5f, 0, DARKGRAY);
     Vector2 m = GetMousePosition();
@@ -31,16 +31,21 @@ void Menu::set_audio_volume()
 
 void Menu::apply_master_volume(Player& player, Levels& level_1, Levels& level_2)
 {
+    // Esta funcion aplica el volumen maestro a TODAS las musicas y sonidos
     SetMasterVolume(master_volume);
     SetMusicVolume(menu_music, master_volume);
     SetMusicVolume(ending_music, master_volume);
+
+    // Aqui nos aseguramos que la musica de los niveles tambien respete el master volume
     SetMusicVolume(level_1.level1_music, master_volume);
     SetMusicVolume(level_2.level2_music, master_volume);
+
     SetSoundVolume(button_sound, master_volume);
     SetSoundVolume(level_1.coin_sound, master_volume);
     SetSoundVolume(level_1.life_up_sound, master_volume);
     SetSoundVolume(level_2.coin_sound, master_volume);
     SetSoundVolume(level_2.life_up_sound, master_volume);
+
     player.jump_volume = master_volume;
     player.hit_volume = master_volume;
     player.death_volume = master_volume;
@@ -56,7 +61,7 @@ void Menu::toggle_fullscreen()
 
 void Menu::toggle_vsync()
 {
-    vsync_enabled = !vsync_enabled; 
+    vsync_enabled = !vsync_enabled;
 }
 
 void Menu::toggle_fps()
@@ -72,7 +77,7 @@ void Menu::apply_video_settings()
     int targetH = resolutions[resolution_index].h;
     if (!fullscreen && (GetScreenWidth() != targetW || GetScreenHeight() != targetH))
         SetWindowSize(targetW, targetH);
-    if (show_fps) DrawFPS(10,10);
+    if (show_fps) DrawFPS(10, 10);
 }
 
 void Menu::init_animation()
@@ -120,8 +125,8 @@ void Menu::init_animation()
         DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
         if (state == 3)
         {
-            DrawRectangle(GetScreenWidth()/2 - 112, GetScreenHeight()/2 - 112, 224, 224, Fade(RAYWHITE, alpha));
-            DrawText(TextSubtext("raylib", 0, lettersCount), GetScreenWidth()/2 - 44, GetScreenHeight()/2 + 48, 50, Fade(BLACK, alpha));
+            DrawRectangle(GetScreenWidth() / 2 - 112, GetScreenHeight() / 2 - 112, 224, 224, Fade(RAYWHITE, alpha));
+            DrawText(TextSubtext("raylib", 0, lettersCount), GetScreenWidth() / 2 - 44, GetScreenHeight() / 2 + 48, 50, Fade(BLACK, alpha));
         }
     }
     EndDrawing();
@@ -204,14 +209,14 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     DrawTextEx(font, TextFormat("Show FPS (G): %s", show_fps ? "Yes" : "No"), Vector2{ xLabel, y }, 30, 3, BLACK);
     if (IsKeyPressed(KEY_G)) toggle_fps();
     y += 50;
-    DrawTextEx(font, TextFormat("Resolution (H/J): %dx%d", resolution_index==0?1280:resolution_index==1?1600:1920, resolution_index==0?720:resolution_index==1?900:1080), Vector2{ xLabel, y }, 30, 3, BLACK);
+    DrawTextEx(font, TextFormat("Resolution (H/J): %dx%d", resolution_index == 0 ? 1280 : resolution_index == 1 ? 1600 : 1920, resolution_index == 0 ? 720 : resolution_index == 1 ? 900 : 1080), Vector2{ xLabel, y }, 30, 3, BLACK);
     if (IsKeyPressed(KEY_H)) resolution_index = (resolution_index + 1) % 3;
     if (IsKeyPressed(KEY_J)) resolution_index = (resolution_index + 2) % 3;
 
     apply_master_volume(player, level_1, level_2);
     apply_video_settings();
 
-    Rectangle backBtn = { panel.x + panel.width/2 - 200, panel.y + panel.height - 90, 400, 70 };
+    Rectangle backBtn = { panel.x + panel.width / 2 - 200, panel.y + panel.height - 90, 400, 70 };
     DrawRectangleRounded(backBtn, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
     DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 40, backBtn.y + 20 }, 40, 4, BLACK);
@@ -221,12 +226,26 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
         DrawRectangleRounded(backBtn, 0.3f, 0, GRAY);
         DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
         DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 40, backBtn.y + 20 }, 40, 4, BLACK);
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) settings = false;
+
+        // FIX: Usamos IsMouseButtonReleased para evitar que el clic "atraviese" el boton
+        // y active algo en el menu principal en el mismo frame.
+        // Ademas activamos la supresion.
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
+        {
+            settings = false;
+            suppress_menu_click_one_frame = true;
+        }
     }
 }
 
 void Menu::check_button()
 {
+    // FIX: Si acabamos de salir de settings, no procesamos clics en el menu en este frame
+    if (suppress_menu_click_one_frame) {
+        suppress_menu_click_one_frame = false;
+        return;
+    }
+
     if (!keybindings && !settings)
     {
         if (CheckCollisionPointRec(mouse_pos, start_button))

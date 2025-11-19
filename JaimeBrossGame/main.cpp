@@ -71,14 +71,16 @@ int main()
 				menu.draw();
 			else
 				menu.draw_keybindings();
+
 			menu.check_button();
 			player.set_pos1();
 			menu.reset_lvl(level_1, level_2);
 			enemies.reset_enemies();
-			menu.set_audio_volume();
-			level_1.set_audio_volume();
-			level_2.set_audio_volume();
-			player.set_audio_volume();
+
+			// FIX: Llamamos a apply_master_volume para aplicar el volumen configurado
+			// a todos los elementos (niveles y jugador) consistentemente.
+			// Se eliminaron las llamadas individuales level_1.set_audio_volume() que reseteaban el volumen.
+			menu.apply_master_volume(player, level_1, level_2);
 		}
 		if (menu.start_game && !level_2.completed)
 		{
