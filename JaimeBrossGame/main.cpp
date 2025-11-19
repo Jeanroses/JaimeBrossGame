@@ -3,7 +3,7 @@
 
 int main()
 {
-	InitWindow(0, 0, "Super Mango");
+	InitWindow(0, 0, "Jaime Bross Game");
 	ToggleFullscreen();
 	InitAudioDevice();
 	SetExitKey(KEY_NULL);
