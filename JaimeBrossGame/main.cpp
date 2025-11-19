@@ -18,19 +18,56 @@ int main()
 	Player player;
 	Enemies enemies;
 
+	PlayMusicStream(menu.menu_music);
+
 	while (menu.init)
 		menu.init_animation();
 
-	PlayMusicStream(level_1.level1_music);
-	PlayMusicStream(level_2.level2_music);
-	PlayMusicStream(menu.menu_music);
-	PlayMusicStream(menu.ending_music);
 	while (!menu.exit_game)
 	{
+		// Music routing: only one context at a time
+		if (!menu.start_game && !level_2.completed)
+		{
+			// Menu context
+			if (!IsMusicStreamPlaying(menu.menu_music)) PlayMusicStream(menu.menu_music);
+			StopMusicStream(level_1.level1_music);
+			StopMusicStream(level_2.level2_music);
+			StopMusicStream(menu.ending_music);
+			UpdateMusicStream(menu.menu_music);
+		}
+		else if (menu.start_game && !level_2.completed)
+		{
+			StopMusicStream(menu.menu_music);
+			StopMusicStream(menu.ending_music);
+			if (!level_1.completed)
+			{
+				if (!IsMusicStreamPlaying(level_1.level1_music)) PlayMusicStream(level_1.level1_music);
+				StopMusicStream(level_2.level2_music);
+				UpdateMusicStream(level_1.level1_music);
+			}
+			else
+			{
+				if (!IsMusicStreamPlaying(level_2.level2_music)) PlayMusicStream(level_2.level2_music);
+				StopMusicStream(level_1.level1_music);
+				UpdateMusicStream(level_2.level2_music);
+			}
+		}
+		else if (level_2.completed)
+		{
+			StopMusicStream(menu.menu_music);
+			StopMusicStream(level_1.level1_music);
+			StopMusicStream(level_2.level2_music);
+			if (!IsMusicStreamPlaying(menu.ending_music)) PlayMusicStream(menu.ending_music);
+			UpdateMusicStream(menu.ending_music);
+		}
+
 		BeginDrawing();
+
 		if (!menu.start_game)
 		{
-			if (!menu.keybindings)
+			if (menu.settings)
+				menu.draw_settings(player, level_1, level_2);
+			else if (!menu.keybindings)
 				menu.draw();
 			else
 				menu.draw_keybindings();
