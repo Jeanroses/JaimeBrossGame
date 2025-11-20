@@ -54,15 +54,8 @@ void Menu::toggle_fullscreen()
     else if (!fullscreen && IsWindowFullscreen()) ToggleFullscreen();
 }
 
-void Menu::toggle_vsync()
-{
-    vsync_enabled = !vsync_enabled;
-}
-
-void Menu::toggle_fps()
-{
-    show_fps = !show_fps;
-}
+void Menu::toggle_vsync() { vsync_enabled = !vsync_enabled; }
+void Menu::toggle_fps() { show_fps = !show_fps; }
 
 void Menu::apply_video_settings()
 {
@@ -76,49 +69,25 @@ void Menu::apply_video_settings()
 
 void Menu::init_animation()
 {
-    if (state == 0)
-    {
-        framesCounter++;
-        if (framesCounter == 120) { state = 1; framesCounter = 0; }
-    }
-    else if (state == 1)
-    {
-        topSideRecWidth += 4;
-        leftSideRecHeight += 4;
-        if (topSideRecWidth >= 256) state = 2;
-    }
-    else if (state == 2)
-    {
-        bottomSideRecWidth += 4;
-        rightSideRecHeight += 4;
-        if (bottomSideRecWidth >= 256) state = 3;
-    }
-    else if (state == 3)
-    {
+    if (state == 0) { framesCounter++; if (framesCounter == 120) { state = 1; framesCounter = 0; } }
+    else if (state == 1) { topSideRecWidth += 4; leftSideRecHeight += 4; if (topSideRecWidth >= 256) state = 2; }
+    else if (state == 2) { bottomSideRecWidth += 4; rightSideRecHeight += 4; if (bottomSideRecWidth >= 256) state = 3; }
+    else if (state == 3) {
         framesCounter++;
         if (framesCounter / 12) { lettersCount++; framesCounter = 0; }
-        if (lettersCount >= 10)
-        {
-            alpha -= 0.02f;
-            if (alpha <= 0.0f) { alpha = 0.0f; state = 4; }
-        }
+        if (lettersCount >= 10) { alpha -= 0.02f; if (alpha <= 0.0f) { alpha = 0.0f; state = 4; } }
     }
     else if (state == 4) init = false;
 
     BeginDrawing();
     ClearBackground(RAYWHITE);
-    if (state == 0)
-    {
-        if ((framesCounter / 15) % 2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK);
-    }
-    else if (state <= 3)
-    {
+    if (state == 0) { if ((framesCounter / 15) % 2) DrawRectangle(logoPositionX, logoPositionY, 16, 16, BLACK); }
+    else if (state <= 3) {
         DrawRectangle(logoPositionX, logoPositionY, topSideRecWidth, 16, Fade(BLACK, alpha));
         DrawRectangle(logoPositionX, logoPositionY + 16, 16, leftSideRecHeight - 32, Fade(BLACK, alpha));
         DrawRectangle(logoPositionX + 240, logoPositionY + 16, 16, rightSideRecHeight - 32, Fade(BLACK, alpha));
         DrawRectangle(logoPositionX, logoPositionY + 240, bottomSideRecWidth, 16, Fade(BLACK, alpha));
-        if (state == 3)
-        {
+        if (state == 3) {
             DrawRectangle(GetScreenWidth() / 2 - 112, GetScreenHeight() / 2 - 112, 224, 224, Fade(RAYWHITE, alpha));
             DrawText(TextSubtext("raylib", 0, lettersCount), GetScreenWidth() / 2 - 44, GetScreenHeight() / 2 + 48, 50, Fade(BLACK, alpha));
         }
@@ -135,18 +104,25 @@ void Menu::draw()
     DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
+
     DrawRectangleRounded(start_button, 0.3f, 0, RAYWHITE);
+    DrawRectangleRounded(scores_button, 0.3f, 0, RAYWHITE);
     DrawRectangleRounded(keybindings_button, 0.3f, 0, RAYWHITE);
     DrawRectangleRounded(settings_button, 0.3f, 0, RAYWHITE);
     DrawRectangleRounded(exit_button, 0.3f, 0, RAYWHITE);
+
     DrawRectangleRoundedLines(start_button, 0.3f, 6, BLACK);
+    DrawRectangleRoundedLines(scores_button, 0.3f, 6, BLACK);
     DrawRectangleRoundedLines(keybindings_button, 0.3f, 6, BLACK);
     DrawRectangleRoundedLines(settings_button, 0.3f, 6, BLACK);
     DrawRectangleRoundedLines(exit_button, 0.3f, 6, BLACK);
-    DrawTextEx(font, "Start game", start_game_pos, 50, 5, BLACK);
-    DrawTextEx(font, "Keybindings", keybindings_pos, 50, 5, BLACK);
-    DrawTextEx(font, "Settings", settings_pos, 50, 5, BLACK);
-    DrawTextEx(font, "Exit game", exit_pos, 50, 5, BLACK);
+
+    DrawTextEx(font, "Start game", start_game_pos, 40, 4, BLACK);
+    DrawTextEx(font, "Scores", scores_pos_text, 40, 4, BLACK);
+    DrawTextEx(font, "Keybindings", keybindings_pos, 40, 4, BLACK);
+    DrawTextEx(font, "Settings", settings_pos, 40, 4, BLACK);
+    DrawTextEx(font, "Exit game", exit_pos, 40, 4, BLACK);
+
     apply_video_settings();
 }
 
@@ -167,6 +143,68 @@ void Menu::draw_keybindings()
     DrawTextEx(font, "movement", movement_pos, 30, 3, BLACK);
     DrawTextEx(font, "sprint", sprint_pos, 30, 3, BLACK);
     DrawTextEx(font, "jump", jump_pos, 30, 3, BLACK);
+    apply_video_settings();
+}
+
+void Menu::draw_scores()
+{
+    UpdateMusicStream(menu_music);
+    mouse_pos = GetMousePosition();
+
+    if (!scores_loaded) {
+        DbContext db;
+        if (db.Connect()) {
+            top_scores = db.GetTopScores();
+            db.Disconnect();
+        }
+        scores_loaded = true;
+    }
+
+    ClearBackground(SKYBLUE);
+    DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
+    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
+    DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
+
+    Rectangle panel = { 500, 430, 920, 500 };
+    DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
+    DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
+
+    DrawTextEx(font, "Top Scores", Vector2{ 820, 450 }, 60, 5, BLACK);
+
+    DrawTextEx(font, "Rank", Vector2{ 550, 530 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Name", Vector2{ 700, 530 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Score", Vector2{ 1000, 530 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Level", Vector2{ 1250, 530 }, 30, 3, DARKGRAY);
+    DrawLine(520, 570, 1400, 570, BLACK);
+
+    int yOffset = 580;
+    int rank = 1;
+    for (const auto& entry : top_scores) {
+        DrawTextEx(font, TextFormat("%d", rank), Vector2{ 560, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, entry.username.c_str(), Vector2{ 700, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, TextFormat("%d", entry.score), Vector2{ 1000, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, TextFormat("%d", entry.level), Vector2{ 1270, (float)yOffset }, 30, 2, BLACK);
+        yOffset += 40;
+        rank++;
+        if (rank > 8) break;
+    }
+
+    Rectangle backBtn = { 640, 950, 600, 80 };
+    DrawRectangleRounded(backBtn, 0.3f, 0, RAYWHITE);
+    DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
+    DrawTextEx(font, "Return to menu", Vector2{ 730, 965 }, 40, 4, BLACK);
+
+    if (CheckCollisionPointRec(mouse_pos, backBtn))
+    {
+        DrawRectangleRounded(backBtn, 0.3f, 0, GRAY);
+        DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
+        DrawTextEx(font, "Return to menu", Vector2{ 730, 965 }, 40, 4, BLACK);
+        if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
+            scores = false;
+            scores_loaded = false;
+            suppress_menu_click_one_frame = true;
+        }
+    }
     apply_video_settings();
 }
 
@@ -238,22 +276,33 @@ void Menu::check_button()
         return;
     }
 
-    if (!keybindings && !settings)
+    if (!keybindings && !settings && !scores)
     {
         if (CheckCollisionPointRec(mouse_pos, start_button))
         {
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(start_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Start game", start_game_pos, 50, 5, BLACK);
+            DrawTextEx(font, "Start game", start_game_pos, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) start_game = true;
+        }
+        else if (CheckCollisionPointRec(mouse_pos, scores_button))
+        {
+            if (play_button_sound) PlaySound(button_sound);
+            play_button_sound = false;
+            DrawRectangleRounded(scores_button, 0.3f, 0, GRAY);
+            DrawTextEx(font, "Scores", scores_pos_text, 40, 4, BLACK);
+            if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+                scores = true;
+                scores_loaded = false;
+            }
         }
         else if (CheckCollisionPointRec(mouse_pos, keybindings_button))
         {
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(keybindings_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Keybindings", keybindings_pos, 50, 5, BLACK);
+            DrawTextEx(font, "Keybindings", keybindings_pos, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) keybindings = true;
         }
         else if (CheckCollisionPointRec(mouse_pos, settings_button))
@@ -261,7 +310,7 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(settings_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Settings", settings_pos, 50, 5, BLACK);
+            DrawTextEx(font, "Settings", settings_pos, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) settings = true;
         }
         else if (CheckCollisionPointRec(mouse_pos, exit_button))
@@ -269,7 +318,7 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(exit_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Exit game", exit_pos, 50, 5, BLACK);
+            DrawTextEx(font, "Exit game", exit_pos, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) exit_game = true;
         }
         else play_button_sound = true;
@@ -288,10 +337,7 @@ void Menu::check_button()
     }
 }
 
-void Menu::pause()
-{
-    if (IsKeyPressed(KEY_ESCAPE)) pause_ = !pause_;
-}
+void Menu::pause() { if (IsKeyPressed(KEY_ESCAPE)) pause_ = !pause_; }
 
 void Menu::pause_draw(Player& player, Levels& level_1, Levels& level_2)
 {
