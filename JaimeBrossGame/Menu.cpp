@@ -95,6 +95,67 @@ void Menu::init_animation()
     EndDrawing();
 }
 
+void Menu::draw_login()
+{
+    UpdateMusicStream(menu_music);
+
+    int key = GetCharPressed();
+    while (key > 0)
+    {
+        if ((key >= 32) && (key <= 125) && (inputLetterCount < 15))
+        {
+            nameInput[inputLetterCount] = (char)key;
+            nameInput[inputLetterCount + 1] = '\0';
+            inputLetterCount++;
+        }
+        key = GetCharPressed();
+    }
+    if (IsKeyPressed(KEY_BACKSPACE))
+    {
+        inputLetterCount--;
+        if (inputLetterCount < 0) inputLetterCount = 0;
+        nameInput[inputLetterCount] = '\0';
+    }
+
+    if (IsKeyPressed(KEY_ENTER) && inputLetterCount > 0)
+    {
+        DbContext db;
+        if (db.Connect()) {
+            current_user_id = db.LoginOrRegister(std::string(nameInput));
+            db.Disconnect();
+        }
+        if (current_user_id != -1) {
+            login_screen = false; 
+        }
+    }
+
+    ClearBackground(SKYBLUE);
+    DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
+    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
+    DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
+
+    Rectangle panel = { 660, 500, 600, 300 };
+    DrawRectangleRounded(panel, 0.2f, 0, Fade(RAYWHITE, 0.9f));
+    DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
+
+    DrawTextEx(font, "ENTER PLAYER NAME", Vector2{ 740, 530 }, 40, 4, BLACK);
+
+    Rectangle textBox = { 760, 600, 400, 60 };
+    DrawRectangleRec(textBox, LIGHTGRAY);
+    DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, BLACK);
+
+    DrawTextEx(font, nameInput, Vector2{ textBox.x + 10, textBox.y + 10 }, 40, 4, MAROON);
+
+    if (inputLetterCount < 15)
+    {
+        if ((framesCounter / 20) % 2 == 0)
+            DrawText("|", (int)textBox.x + 15 + MeasureText(nameInput, 40), (int)textBox.y + 12, 40, BLACK);
+    }
+    framesCounter++;
+
+    DrawTextEx(font, "Press ENTER to start", Vector2{ 780, 700 }, 30, 3, DARKGRAY);
+}
+
 void Menu::draw()
 {
     UpdateMusicStream(menu_music);
@@ -122,6 +183,8 @@ void Menu::draw()
     DrawTextEx(font, "Keybindings", keybindings_pos, 40, 4, BLACK);
     DrawTextEx(font, "Settings", settings_pos, 40, 4, BLACK);
     DrawTextEx(font, "Exit game", exit_pos, 40, 4, BLACK);
+
+    DrawTextEx(font, TextFormat("Player: %s", nameInput), Vector2{ 20, 20 }, 30, 3, WHITE);
 
     apply_video_settings();
 }
@@ -169,7 +232,8 @@ void Menu::draw_scores()
     DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 
-    DrawTextEx(font, "Top Scores", Vector2{ 820, 450 }, 60, 5, BLACK);
+
+    DrawTextEx(font, "Top Scores", Vector2{ 810, 450 }, 60, 5, BLACK);
 
     DrawTextEx(font, "Rank", Vector2{ 550, 530 }, 30, 3, DARKGRAY);
     DrawTextEx(font, "Name", Vector2{ 700, 530 }, 30, 3, DARKGRAY);
@@ -189,16 +253,17 @@ void Menu::draw_scores()
         if (rank > 8) break;
     }
 
-    Rectangle backBtn = { 640, 950, 600, 80 };
+
+    Rectangle backBtn = { 760, 950, 400, 70 };
     DrawRectangleRounded(backBtn, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-    DrawTextEx(font, "Return to menu", Vector2{ 730, 965 }, 40, 4, BLACK);
+    DrawTextEx(font, "Return to menu", Vector2{ 820, 965 }, 40, 4, BLACK);
 
     if (CheckCollisionPointRec(mouse_pos, backBtn))
     {
         DrawRectangleRounded(backBtn, 0.3f, 0, GRAY);
         DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-        DrawTextEx(font, "Return to menu", Vector2{ 730, 965 }, 40, 4, BLACK);
+        DrawTextEx(font, "Return to menu", Vector2{ 820, 965 }, 40, 4, BLACK);
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
             scores = false;
             scores_loaded = false;

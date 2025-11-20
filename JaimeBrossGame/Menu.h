@@ -2,6 +2,7 @@
 #include "Levels.h"
 #include "DbContext.h"
 #include <vector>
+#include <string>
 
 class Menu
 {
@@ -24,11 +25,12 @@ public:
     Rectangle background_src = { 0, 0, 320, 180 };
     Rectangle background_disp = { 0, 0, 1920, 1080 };
 
-    Rectangle start_button = { 800, 460, 320, 80 };
-    Rectangle scores_button = { 800, 560, 320, 80 };
-    Rectangle keybindings_button = { 800, 660, 320, 80 };
-    Rectangle settings_button = { 800, 760, 320, 80 };
-    Rectangle exit_button = { 800, 860, 320, 80 };
+ 
+    Rectangle start_button = { 780, 460, 360, 80 };
+    Rectangle scores_button = { 780, 560, 360, 80 };
+    Rectangle keybindings_button = { 780, 660, 360, 80 };
+    Rectangle settings_button = { 780, 760, 360, 80 };
+    Rectangle exit_button = { 780, 860, 360, 80 };
 
     Rectangle keybindings_background = { 500, 430, 900, 350 };
     Rectangle return_button = { 640, 845, 600, 100 };
@@ -38,11 +40,14 @@ public:
     Vector2 mouse_pos = { 0, 0 };
     Vector2 ending_pos1 = { 70, 200 };
     Vector2 ending_pos2 = { 230, 350 };
-    Vector2 start_game_pos = { 825, 485 };
-    Vector2 scores_pos_text = { 890, 585 };
-    Vector2 keybindings_pos = { 810, 685 };
-    Vector2 settings_pos = { 860, 785 };
-    Vector2 exit_pos = { 845, 885 };
+
+   
+    Vector2 start_game_pos = { 840, 485 };
+    Vector2 scores_pos_text = { 900, 585 };
+    Vector2 keybindings_pos = { 830, 685 };
+    Vector2 settings_pos = { 880, 785 };
+    Vector2 exit_pos = { 865, 885 };
+
     Vector2 return_pos = { 700, 875 };
     Vector2 pause_pos = { 0, 0 };
     Vector2 pause_pos2 = { 0, 0 };
@@ -62,6 +67,8 @@ public:
     int state = 0;
     float alpha = 1.0f;
 
+    // Estados
+    bool login_screen = true;
     bool scores = false;
     bool keybindings = false;
     bool settings = false;
@@ -69,6 +76,11 @@ public:
     bool exit_game = false;
     bool init = true;
     bool pause_ = false;
+
+    // Variables para Login y Scores
+    char nameInput[16] = "\0"; 
+    int inputLetterCount = 0;
+    int current_user_id = -1; 
 
     std::vector<ScoreEntry> top_scores;
     bool scores_loaded = false;
@@ -89,6 +101,7 @@ public:
     void apply_master_volume(class Player& player, class Levels& level_1, class Levels& level_2);
     void init_animation();
     void draw();
+    void draw_login();
     void draw_keybindings();
     void draw_settings(class Player& player, class Levels& level_1, class Levels& level_2);
     void draw_scores();

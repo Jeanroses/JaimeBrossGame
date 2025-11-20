@@ -20,7 +20,15 @@ int main()
 
     PlayMusicStream(menu.menu_music);
 
-    while (menu.init)
+    while (menu.login_screen && !menu.exit_game)
+    {
+        BeginDrawing();
+        menu.draw_login();
+        EndDrawing();
+        if (WindowShouldClose()) menu.exit_game = true;
+    }
+
+    while (menu.init && !menu.exit_game)
         menu.init_animation();
 
     while (!menu.exit_game)

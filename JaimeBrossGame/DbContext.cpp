@@ -1,5 +1,4 @@
 #include "DbContext.h"
-#include <format> 
 
 DbContext::DbContext() {
     hEnv = SQL_NULL_HENV;
@@ -11,30 +10,33 @@ DbContext::~DbContext() {
     Disconnect();
 }
 
+void DbContext::CheckError(SQLHANDLE handle, SQLSMALLINT type, const char* msg) {
+    SQLSMALLINT i = 0;
+    SQLINTEGER native;
+    SQLCHAR state[7];
+    SQLCHAR text[256];
+    SQLSMALLINT len;
+    SQLRETURN ret;
+    do {
+        ret = SQLGetDiagRecA(type, handle, ++i, state, &native, text, sizeof(text), &len);
+        if (SQL_SUCCEEDED(ret)) {
+            std::cout << msg << ": " << state << ":" << i << ":" << native << ":" << text << std::endl;
+        }
+    } while (ret == SQL_SUCCESS);
+}
+
 bool DbContext::Connect() {
-    // 1. Asignar Environment Handle
     if (SQLAllocHandle(SQL_HANDLE_ENV, SQL_NULL_HANDLE, &hEnv) != SQL_SUCCESS) return false;
     if (SQLSetEnvAttr(hEnv, SQL_ATTR_ODBC_VERSION, (SQLPOINTER)SQL_OV_ODBC3, 0) != SQL_SUCCESS) return false;
-
-    // 2. Asignar Connection Handle
     if (SQLAllocHandle(SQL_HANDLE_DBC, hEnv, &hDbc) != SQL_SUCCESS) return false;
-
-    // 3. Conectar a SQL Server
-    SQLWCHAR outConnStr[1024];
-    SQLSMALLINT outConnStrLen;
-
-    // Casting necesario para strings anchos (wstring)
-    retcode = SQLDriverConnect(hDbc, NULL, (SQLWCHAR*)connectionString.c_str(), SQL_NTS,
-        outConnStr, 1024, &outConnStrLen, SQL_DRIVER_NOPROMPT);
-
-    if (SQL_SUCCEEDED(retcode)) {
-        std::cout << "Conectado a la Base de Datos exitosamente." << std::endl;
-        return true;
-    }
-    else {
-        CheckError(hDbc, SQL_HANDLE_DBC, "Error al conectar");
+    SQLWCHAR connStr[1024];
+    wcscpy_s(connStr, connectionString.c_str());
+    retcode = SQLDriverConnectW(hDbc, NULL, connStr, SQL_NTS, NULL, 0, NULL, SQL_DRIVER_NOPROMPT);
+    if (!SQL_SUCCEEDED(retcode)) {
+        CheckError(hDbc, SQL_HANDLE_DBC, "Connection Failed");
         return false;
     }
+    return true;
 }
 
 void DbContext::Disconnect() {
@@ -46,75 +48,67 @@ void DbContext::Disconnect() {
     if (hEnv != SQL_NULL_HENV) SQLFreeHandle(SQL_HANDLE_ENV, hEnv);
 }
 
-// INSERTAR PUNTAJE
-bool DbContext::InsertScore(int userId, int scoreValue, int levelReached, bool isCompleted) {
-    if (SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt) != SQL_SUCCESS) return false;
+// LÓGICA NUEVA: LOGIN O REGISTRO
+int DbContext::LoginOrRegister(std::string username) {
+    int userId = -1;
+    if (SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt) != SQL_SUCCESS) return -1;
 
-    // Construimos la query SQL (En C# EF esto es automático, aquí es manual)
-    // Nota: En producción real, usarías parámetros (?) para evitar SQL Injection.
-    // Usamos std::format (C++20) o string append.
-    std::string query = "INSERT INTO Scores (UserID, ScoreValue, LevelReached, IsCompleted) VALUES (" +
-        std::to_string(userId) + ", " +
-        std::to_string(scoreValue) + ", " +
-        std::to_string(levelReached) + ", " +
-        std::to_string(isCompleted ? 1 : 0) + ")";
+    // 1. Intentar encontrar al usuario
+    std::string query = "SELECT Id FROM Users WHERE Username = '" + username + "'";
+    retcode = SQLExecDirectA(hStmt, (SQLCHAR*)query.c_str(), SQL_NTS);
 
-    // Convertir a wstring para ODBC
-    std::wstring wQuery(query.begin(), query.end());
+    if (SQL_SUCCEEDED(retcode)) {
+        if (SQLFetch(hStmt) == SQL_SUCCESS) {
+            SQLGetData(hStmt, 1, SQL_C_LONG, &userId, 0, NULL);
+        }
+    }
+    SQLFreeStmt(hStmt, SQL_CLOSE);
 
-    retcode = SQLExecDirect(hStmt, (SQLWCHAR*)wQuery.c_str(), SQL_NTS);
-
-    bool success = SQL_SUCCEEDED(retcode);
-    if (!success) CheckError(hStmt, SQL_HANDLE_STMT, "Error al insertar score");
-
-    SQLFreeHandle(SQL_HANDLE_STMT, hStmt); // Liberar el statement
-    hStmt = SQL_NULL_HSTMT;
-    return success;
-}
-
-// OBTENER TOP SCORES (SELECT)
-std::vector<ScoreEntry> DbContext::GetTopScores() {
-    std::vector<ScoreEntry> scores;
-    if (SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt) != SQL_SUCCESS) return scores;
-
-    // Query con JOIN (Igual que la que te di en el diseño SQL)
-    std::wstring query = L"SELECT TOP 10 u.Username, s.ScoreValue, s.LevelReached FROM Scores s INNER JOIN Users u ON s.UserID = u.UserID ORDER BY s.ScoreValue DESC";
-
-    if (SQL_SUCCEEDED(SQLExecDirect(hStmt, (SQLWCHAR*)query.c_str(), SQL_NTS))) {
-        char username[50];
-        int score;
-        int level;
-        SQLLEN indicator;
-
-        while (SQLFetch(hStmt) == SQL_SUCCESS) {
-            // Obtenemos columna 1 (Username), 2 (Score), 3 (Level)
-            SQLGetData(hStmt, 1, SQL_C_CHAR, username, sizeof(username), &indicator);
-            SQLGetData(hStmt, 2, SQL_C_LONG, &score, 0, &indicator);
-            SQLGetData(hStmt, 3, SQL_C_LONG, &level, 0, &indicator);
-
-            scores.push_back({ std::string(username), score, level });
+    // 2. Si no existe (userId sigue siendo -1), insertarlo
+    if (userId == -1) {
+        query = "INSERT INTO Users (Username, CreatedAt) OUTPUT INSERTED.Id VALUES ('" + username + "', GETDATE())";
+        retcode = SQLExecDirectA(hStmt, (SQLCHAR*)query.c_str(), SQL_NTS);
+        if (SQL_SUCCEEDED(retcode)) {
+            if (SQLFetch(hStmt) == SQL_SUCCESS) {
+                SQLGetData(hStmt, 1, SQL_C_LONG, &userId, 0, NULL);
+            }
         }
     }
 
     SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
-    hStmt = SQL_NULL_HSTMT;
-    return scores;
+    return userId;
 }
 
-// Manejo de errores básico
-void DbContext::CheckError(SQLHANDLE handle, SQLSMALLINT type, const char* msg) {
-    SQLSMALLINT i = 0;
-    SQLINTEGER native;
-    SQLWCHAR state[7];
-    SQLWCHAR text[256];
-    SQLSMALLINT len;
-    SQLRETURN ret;
+bool DbContext::InsertScore(int userId, int scoreValue, int levelReached, bool isCompleted) {
+    if (SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt) != SQL_SUCCESS) return false;
+    std::string query = "INSERT INTO Scores (UserId, Score, LevelReached, IsCompleted, DateAchieved) VALUES ("
+        + std::to_string(userId) + ", " + std::to_string(scoreValue) + ", "
+        + std::to_string(levelReached) + ", " + (isCompleted ? "1" : "0") + ", GETDATE())";
 
-    std::cout << msg << std::endl;
-    do {
-        ret = SQLGetDiagRec(type, handle, ++i, state, &native, text, sizeof(text) / sizeof(SQLWCHAR), &len);
-        if (SQL_SUCCEEDED(ret)) {
-            std::wcout << L"Mensaje: " << text << L" | Estado: " << state << std::endl;
+    retcode = SQLExecDirectA(hStmt, (SQLCHAR*)query.c_str(), SQL_NTS);
+    bool success = SQL_SUCCEEDED(retcode);
+    if (!success) CheckError(hStmt, SQL_HANDLE_STMT, "Insert Score Failed");
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+    return success;
+}
+
+std::vector<ScoreEntry> DbContext::GetTopScores() {
+    std::vector<ScoreEntry> scores;
+    if (SQLAllocHandle(SQL_HANDLE_STMT, hDbc, &hStmt) != SQL_SUCCESS) return scores;
+
+    std::string query = "SELECT TOP 8 u.Username, s.Score, s.LevelReached FROM Scores s JOIN Users u ON s.UserId = u.Id ORDER BY s.Score DESC";
+    retcode = SQLExecDirectA(hStmt, (SQLCHAR*)query.c_str(), SQL_NTS);
+
+    if (SQL_SUCCEEDED(retcode)) {
+        char name[50];
+        int score, level;
+        while (SQLFetch(hStmt) == SQL_SUCCESS) {
+            SQLGetData(hStmt, 1, SQL_C_CHAR, name, sizeof(name), NULL);
+            SQLGetData(hStmt, 2, SQL_C_LONG, &score, 0, NULL);
+            SQLGetData(hStmt, 3, SQL_C_LONG, &level, 0, NULL);
+            scores.push_back({ std::string(name), score, level });
         }
-    } while (ret == SQL_SUCCESS);
+    }
+    SQLFreeHandle(SQL_HANDLE_STMT, hStmt);
+    return scores;
 }
