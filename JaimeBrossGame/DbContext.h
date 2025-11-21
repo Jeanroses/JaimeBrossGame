@@ -34,8 +34,12 @@ private:
     SQLHSTMT hStmt;
     SQLRETURN retcode;
 
-    // Cadena de conexión
-    std::wstring connectionString = L"Server=DESKTOP-U2NJFRP\\SQLEXPRESS;Database=DB_JaimeBrossGame;Trusted_Connection=True;TrustServerCertificate=True;";
+    // Cadena de conexión CORREGIDA con la barra invertida escapada
+    std::wstring connectionString = L"Driver={ODBC Driver 17 for SQL Server};"
+        L"Server=LAPTOP-645QQ1GG\\SQLEXPRESS;" // <-- ¡AQUÍ ESTÁ EL CAMBIO!
+        L"Database=DB_JaimeBrossGame;"
+        L"Trusted_Connection=Yes;"
+        L"TrustServerCertificate=Yes;";
 
     void CheckError(SQLHANDLE handle, SQLSMALLINT type, const char* msg);
 
@@ -46,8 +50,8 @@ public:
     bool Connect();
     void Disconnect();
 
-    // Nuevo método para Login/Registro
-    int LoginOrRegister(std::string username);
+    // Método actualizado para Login/Registro con contraseña
+    int LoginOrRegister(std::string username, std::string password);
 
     bool InsertScore(int userId, int scoreValue, int levelReached, bool isCompleted);
     std::vector<ScoreEntry> GetTopScores();

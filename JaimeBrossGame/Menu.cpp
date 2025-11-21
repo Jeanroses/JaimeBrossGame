@@ -2,6 +2,12 @@
 #include "Player.h"
 #include "raylib.h"
 
+// Variables estáticas para gestionar el estado de los campos de texto
+static int activeTextBox = 0; // 0: username, 1: password
+static char passwordInput[16] = "";
+static int passwordLetterCount = 0;
+static std::string loginMessage = "";
+
 static float SliderHorizontal(Rectangle bounds, float value, float minValue, float maxValue)
 {
     float t = (value - minValue) / (maxValue - minValue);
@@ -97,48 +103,64 @@ void Menu::init_animation()
 
 void Menu::draw_login()
 {
-    set_audio_volume(); // Aseguramos que el volumen bajo se aplique aquí
+    set_audio_volume();
     UpdateMusicStream(menu_music);
 
+    // Lógica de cambio de foco con TAB
+    if (IsKeyPressed(KEY_TAB)) {
+        activeTextBox = (activeTextBox + 1) % 2;
+    }
+
+    // Lógica de entrada de texto para el campo activo
     int key = GetCharPressed();
-    while (key > 0)
-    {
-        if ((key >= 32) && (key <= 125) && (inputLetterCount < 15))
-        {
-            nameInput[inputLetterCount] = (char)key;
-            nameInput[inputLetterCount + 1] = '\0';
-            inputLetterCount++;
+    while (key > 0) {
+        if ((key >= 32) && (key <= 125)) {
+            if (activeTextBox == 0 && (inputLetterCount < 15)) {
+                nameInput[inputLetterCount] = (char)key;
+                nameInput[inputLetterCount + 1] = '\0';
+                inputLetterCount++;
+            }
+            else if (activeTextBox == 1 && (passwordLetterCount < 15)) {
+                passwordInput[passwordLetterCount] = (char)key;
+                passwordInput[passwordLetterCount + 1] = '\0';
+                passwordLetterCount++;
+            }
         }
         key = GetCharPressed();
     }
-    if (IsKeyPressed(KEY_BACKSPACE))
-    {
-        inputLetterCount--;
-        if (inputLetterCount < 0) inputLetterCount = 0;
-        nameInput[inputLetterCount] = '\0';
+
+    if (IsKeyPressed(KEY_BACKSPACE)) {
+        if (activeTextBox == 0) {
+            inputLetterCount--;
+            if (inputLetterCount < 0) inputLetterCount = 0;
+            nameInput[inputLetterCount] = '\0';
+        }
+        else if (activeTextBox == 1) {
+            passwordLetterCount--;
+            if (passwordLetterCount < 0) passwordLetterCount = 0;
+            passwordInput[passwordLetterCount] = '\0';
+        }
     }
 
-    // LOGICA DE LOGIN
-    if (IsKeyPressed(KEY_ENTER) && inputLetterCount > 0)
+    // LOGICA DE LOGIN con contraseña
+    if (IsKeyPressed(KEY_ENTER) && inputLetterCount > 0 && passwordLetterCount > 0)
     {
         DbContext db;
-        std::cout << "Intentando conectar a SQL Server..." << std::endl;
-
         if (db.Connect()) {
-            std::cout << "Conectado. Registrando/Logueando usuario..." << std::endl;
-            current_user_id = db.LoginOrRegister(std::string(nameInput));
+            current_user_id = db.LoginOrRegister(std::string(nameInput), std::string(passwordInput));
             db.Disconnect();
 
-            if (current_user_id != -1) {
-                std::cout << "Login exitoso. ID: " << current_user_id << std::endl;
+            if (current_user_id > 0) {
+                loginMessage = ""; // Limpiar mensaje en éxito
                 login_screen = false;
-            }
-            else {
-                std::cout << "Error: Login devolvio ID -1" << std::endl;
+            } else if (current_user_id == -2) {
+                loginMessage = "Invalid username or password";
+            } else {
+                loginMessage = "Database connection error";
             }
         }
         else {
-            std::cout << "Fallo la conexion inicial a la BD." << std::endl;
+            loginMessage = "Failed to connect to database";
         }
     }
 
@@ -147,28 +169,47 @@ void Menu::draw_login()
     DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
-    Rectangle panel = { 660, 500, 600, 300 };
+    Rectangle panel = { 660, 450, 600, 450 }; // Panel más grande
     DrawRectangleRounded(panel, 0.2f, 0, Fade(RAYWHITE, 0.9f));
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 
-    DrawTextEx(font, "ENTER PLAYER NAME", Vector2{ 740, 530 }, 40, 4, BLACK);
+    // Título y cajas de texto
+    DrawTextEx(font, "LOGIN / REGISTER", Vector2{ panel.x + 150, panel.y + 30 }, 40, 4, BLACK);
+    
+    DrawText("Username", (int)panel.x + 50, (int)panel.y + 90, 20, DARKGRAY);
+    Rectangle userBox = { panel.x + 50, panel.y + 120, panel.width - 100, 50 };
+    DrawRectangleRec(userBox, LIGHTGRAY);
+    DrawRectangleLinesEx(userBox, 2, activeTextBox == 0 ? BLACK : DARKGRAY);
+    DrawTextEx(font, nameInput, Vector2{ userBox.x + 10, userBox.y + 10 }, 40, 4, MAROON);
 
-    Rectangle textBox = { 760, 600, 400, 60 };
-    DrawRectangleRec(textBox, LIGHTGRAY);
-    DrawRectangleLines((int)textBox.x, (int)textBox.y, (int)textBox.width, (int)textBox.height, BLACK);
+    DrawText("Password", (int)panel.x + 50, (int)panel.y + 190, 20, DARKGRAY);
+    Rectangle passBox = { panel.x + 50, panel.y + 220, panel.width - 100, 50 };
+    DrawRectangleRec(passBox, LIGHTGRAY);
+    DrawRectangleLinesEx(passBox, 2, activeTextBox == 1 ? BLACK : DARKGRAY);
+    
+    // Enmascarar la contraseña
+    std::string maskedPassword(passwordLetterCount, '*');
+    DrawTextEx(font, maskedPassword.c_str(), Vector2{ passBox.x + 10, passBox.y + 10 }, 40, 4, MAROON);
 
-    DrawTextEx(font, nameInput, Vector2{ textBox.x + 10, textBox.y + 10 }, 40, 4, MAROON);
-
-    if (inputLetterCount < 15)
-    {
-        // Corrección de la línea punteada (cursor) usando MeasureTextEx para precisión
-        if ((framesCounter / 20) % 2 == 0)
-            DrawText("|", (int)textBox.x + 15 + (int)MeasureTextEx(font, nameInput, 40, 4).x, (int)textBox.y + 12, 40, BLACK);
+    // Dibujar cursor parpadeante en el campo activo
+    if ((framesCounter / 20) % 2 == 0) {
+        if (activeTextBox == 0 && inputLetterCount < 15) {
+            DrawText("|", (int)userBox.x + 15 + (int)MeasureTextEx(font, nameInput, 40, 4).x, (int)userBox.y + 8, 40, BLACK);
+        } else if (activeTextBox == 1 && passwordLetterCount < 15) {
+            DrawText("|", (int)passBox.x + 15 + (int)MeasureTextEx(font, maskedPassword.c_str(), 40, 4).x, (int)passBox.y + 8, 40, BLACK);
+        }
     }
     framesCounter++;
 
-    DrawTextEx(font, "Press ENTER to start", Vector2{ 780, 700 }, 30, 3, DARKGRAY);
+    // Mensaje de error
+    if (!loginMessage.empty()) {
+        DrawText(loginMessage.c_str(), (int)panel.x + 50, (int)passBox.y + 60, 20, RED);
+    }
+
+    DrawTextEx(font, "Press ENTER to start", Vector2{ panel.x + 150, panel.y + 350 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Press TAB to switch fields", Vector2{ panel.x + 120, panel.y + 400}, 20, 3, DARKGRAY);
 }
+
 
 void Menu::draw()
 {
