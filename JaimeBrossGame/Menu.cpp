@@ -299,7 +299,7 @@ void Menu::draw_scores()
     DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
-    Rectangle panel = { 500, 430, 920, 500 };
+    Rectangle panel = { 410, 430, 1100, 500 };
     DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 
@@ -358,7 +358,7 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
-    Rectangle panel = { 420, 450, 1080, 550 };
+    Rectangle panel = { 360, 450, 1200, 550 };
     DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 

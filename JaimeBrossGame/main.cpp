@@ -4,7 +4,7 @@
 int main()
 {
     InitWindow(0, 0, "Jaime Bross Game");
-    ToggleFullscreen();
+    //ToggleFullscreen();
     InitAudioDevice();
     SetExitKey(KEY_NULL);
     SetTargetFPS(60);
