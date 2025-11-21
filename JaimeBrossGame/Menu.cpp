@@ -2,8 +2,7 @@
 #include "Player.h"
 #include "raylib.h"
 
-// Variables estáticas para gestionar el estado de los campos de texto
-static int activeTextBox = 0; // 0: username, 1: password
+static int activeTextBox = 0;
 static char passwordInput[16] = "";
 static int passwordLetterCount = 0;
 static std::string loginMessage = "";
@@ -106,12 +105,10 @@ void Menu::draw_login()
     set_audio_volume();
     UpdateMusicStream(menu_music);
 
-    // Lógica de cambio de foco con TAB
     if (IsKeyPressed(KEY_TAB)) {
         activeTextBox = (activeTextBox + 1) % 2;
     }
 
-    // Lógica de entrada de texto para el campo activo
     int key = GetCharPressed();
     while (key > 0) {
         if ((key >= 32) && (key <= 125)) {
@@ -142,7 +139,6 @@ void Menu::draw_login()
         }
     }
 
-    // LOGICA DE LOGIN con contraseña
     if (IsKeyPressed(KEY_ENTER) && inputLetterCount > 0 && passwordLetterCount > 0)
     {
         DbContext db;
@@ -151,12 +147,14 @@ void Menu::draw_login()
             db.Disconnect();
 
             if (current_user_id > 0) {
-                loginMessage = ""; // Limpiar mensaje en éxito
+                loginMessage = "";
                 login_screen = false;
                 init = false;
-            } else if (current_user_id == -2) {
+            }
+            else if (current_user_id == -2) {
                 loginMessage = "Invalid username or password";
-            } else {
+            }
+            else {
                 loginMessage = "Database connection error";
             }
         }
@@ -170,47 +168,54 @@ void Menu::draw_login()
     DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
-    Rectangle panel = { 660, 450, 600, 450 }; // Panel más grande
+    Rectangle panel = { 660, 450, 600, 450 };
     DrawRectangleRounded(panel, 0.2f, 0, Fade(RAYWHITE, 0.9f));
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 
-    // Título y cajas de texto
-    DrawTextEx(font, "LOGIN / REGISTER", Vector2{ panel.x + 150, panel.y + 30 }, 40, 4, BLACK);
-    
+    Vector2 titleSize = MeasureTextEx(font, "LOGIN / REGISTER", 40, 4);
+    Vector2 titlePos = { panel.x + panel.width / 2 - titleSize.x / 2, panel.y + 20 };
+    DrawTextEx(font, "LOGIN / REGISTER", titlePos, 40, 4, BLACK);
+
     DrawText("Username", (int)panel.x + 50, (int)panel.y + 90, 20, DARKGRAY);
     Rectangle userBox = { panel.x + 50, panel.y + 120, panel.width - 100, 50 };
     DrawRectangleRec(userBox, LIGHTGRAY);
     DrawRectangleLinesEx(userBox, 2, activeTextBox == 0 ? BLACK : DARKGRAY);
-    DrawTextEx(font, nameInput, Vector2{ userBox.x + 10, userBox.y + 10 }, 40, 4, MAROON);
+    Vector2 userTextPos = { userBox.x + 10, userBox.y + (userBox.height / 2) - (MeasureTextEx(font, nameInput, 40, 4).y / 2) };
+    DrawTextEx(font, nameInput, userTextPos, 40, 4, MAROON);
 
     DrawText("Password", (int)panel.x + 50, (int)panel.y + 190, 20, DARKGRAY);
     Rectangle passBox = { panel.x + 50, panel.y + 220, panel.width - 100, 50 };
     DrawRectangleRec(passBox, LIGHTGRAY);
     DrawRectangleLinesEx(passBox, 2, activeTextBox == 1 ? BLACK : DARKGRAY);
-    
-    // Enmascarar la contraseña
-    std::string maskedPassword(passwordLetterCount, '*');
-    DrawTextEx(font, maskedPassword.c_str(), Vector2{ passBox.x + 10, passBox.y + 10 }, 40, 4, MAROON);
 
-    // Dibujar cursor parpadeante en el campo activo
+    std::string maskedPassword(passwordLetterCount, '*');
+    Vector2 passTextPos = { passBox.x + 10, passBox.y + (passBox.height / 2) - (MeasureTextEx(font, maskedPassword.c_str(), 40, 4).y / 2) };
+    DrawTextEx(font, maskedPassword.c_str(), passTextPos, 40, 4, MAROON);
+
     if ((framesCounter / 20) % 2 == 0) {
         if (activeTextBox == 0 && inputLetterCount < 15) {
-            DrawText("|", (int)userBox.x + 15 + (int)MeasureTextEx(font, nameInput, 40, 4).x, (int)userBox.y + 8, 40, BLACK);
-        } else if (activeTextBox == 1 && passwordLetterCount < 15) {
-            DrawText("|", (int)passBox.x + 15 + (int)MeasureTextEx(font, maskedPassword.c_str(), 40, 4).x, (int)passBox.y + 8, 40, BLACK);
+            float w = MeasureTextEx(font, nameInput, 40, 4).x;
+            Vector2 caretPos = { userBox.x + 10 + w, userBox.y + (userBox.height / 2) - (MeasureTextEx(font, "|", 40, 4).y / 2) };
+            DrawTextEx(font, "|", caretPos, 40, 4, BLACK);
+        }
+        else if (activeTextBox == 1 && passwordLetterCount < 15) {
+            float w = MeasureTextEx(font, maskedPassword.c_str(), 40, 4).x;
+            Vector2 caretPos = { passBox.x + 10 + w, passBox.y + (passBox.height / 2) - (MeasureTextEx(font, "|", 40, 4).y / 2) };
+            DrawTextEx(font, "|", caretPos, 40, 4, BLACK);
         }
     }
     framesCounter++;
 
-    // Mensaje de error
     if (!loginMessage.empty()) {
-        DrawText(loginMessage.c_str(), (int)panel.x + 50, (int)passBox.y + 60, 20, RED);
+        Vector2 msgSize = MeasureTextEx(font, loginMessage.c_str(), 20, 0);
+        DrawText(loginMessage.c_str(), (int)(panel.x + panel.width / 2 - msgSize.x / 2), (int)passBox.y + 60, 20, RED);
     }
 
-    DrawTextEx(font, "Press ENTER to start", Vector2{ panel.x + 150, panel.y + 350 }, 30, 3, DARKGRAY);
-    DrawTextEx(font, "Press TAB to switch fields", Vector2{ panel.x + 120, panel.y + 400}, 20, 3, DARKGRAY);
+    Vector2 enterSize = MeasureTextEx(font, "Press ENTER to start", 30, 3);
+    DrawTextEx(font, "Press ENTER to start", Vector2{ panel.x + panel.width / 2 - enterSize.x / 2, panel.y + panel.height - 80 }, 30, 3, DARKGRAY);
+    Vector2 tabSize = MeasureTextEx(font, "Press TAB to switch fields", 20, 3);
+    DrawTextEx(font, "Press TAB to switch fields", Vector2{ panel.x + panel.width / 2 - tabSize.x / 2, panel.y + panel.height - 40 }, 20, 3, DARKGRAY);
 }
-
 
 void Menu::draw()
 {
@@ -234,11 +239,17 @@ void Menu::draw()
     DrawRectangleRoundedLines(settings_button, 0.3f, 6, BLACK);
     DrawRectangleRoundedLines(exit_button, 0.3f, 6, BLACK);
 
-    DrawTextEx(font, "Start game", start_game_pos, 40, 4, BLACK);
-    DrawTextEx(font, "Scores", scores_pos_text, 40, 4, BLACK);
-    DrawTextEx(font, "Keybindings", keybindings_pos, 40, 4, BLACK);
-    DrawTextEx(font, "Settings", settings_pos, 40, 4, BLACK);
-    DrawTextEx(font, "Exit game", exit_pos, 40, 4, BLACK);
+    Vector2 ts;
+    ts = MeasureTextEx(font, "Start game", 40, 4);
+    DrawTextEx(font, "Start game", Vector2{ start_button.x + start_button.width / 2 - ts.x / 2, start_button.y + start_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
+    ts = MeasureTextEx(font, "Scores", 40, 4);
+    DrawTextEx(font, "Scores", Vector2{ scores_button.x + scores_button.width / 2 - ts.x / 2, scores_button.y + scores_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
+    ts = MeasureTextEx(font, "Keybindings", 40, 4);
+    DrawTextEx(font, "Keybindings", Vector2{ keybindings_button.x + keybindings_button.width / 2 - ts.x / 2, keybindings_button.y + keybindings_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
+    ts = MeasureTextEx(font, "Settings", 40, 4);
+    DrawTextEx(font, "Settings", Vector2{ settings_button.x + settings_button.width / 2 - ts.x / 2, settings_button.y + settings_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
+    ts = MeasureTextEx(font, "Exit game", 40, 4);
+    DrawTextEx(font, "Exit game", Vector2{ exit_button.x + exit_button.width / 2 - ts.x / 2, exit_button.y + exit_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
 
     DrawTextEx(font, TextFormat("Player: %s", nameInput), Vector2{ 20, 20 }, 30, 3, WHITE);
 
@@ -258,10 +269,14 @@ void Menu::draw_keybindings()
     DrawRectangleRounded(keybindings_background, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(keybindings_background, 0.3f, 6, BLACK);
     animations.keybindings();
-    DrawTextEx(font, "Return to menu", return_pos, 50, 5, BLACK);
-    DrawTextEx(font, "movement", movement_pos, 30, 3, BLACK);
-    DrawTextEx(font, "sprint", sprint_pos, 30, 3, BLACK);
-    DrawTextEx(font, "jump", jump_pos, 30, 3, BLACK);
+    Vector2 rt = MeasureTextEx(font, "Return to menu", 50, 5);
+    DrawTextEx(font, "Return to menu", Vector2{ return_button.x + return_button.width / 2 - rt.x / 2, return_button.y + return_button.height / 2 - rt.y / 2 }, 50, 5, BLACK);
+    Vector2 mv = MeasureTextEx(font, "movement", 30, 3);
+    DrawTextEx(font, "movement", Vector2{ movement_pos.x - mv.x / 2, movement_pos.y - mv.y / 2 }, 30, 3, BLACK);
+    Vector2 sp = MeasureTextEx(font, "sprint", 30, 3);
+    DrawTextEx(font, "sprint", Vector2{ sprint_pos.x - sp.x / 2, sprint_pos.y - sp.y / 2 }, 30, 3, BLACK);
+    Vector2 jm = MeasureTextEx(font, "jump", 30, 3);
+    DrawTextEx(font, "jump", Vector2{ jump_pos.x - jm.x / 2, jump_pos.y - jm.y / 2 }, 30, 3, BLACK);
     apply_video_settings();
 }
 
@@ -288,38 +303,38 @@ void Menu::draw_scores()
     DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 
+    Vector2 titleSize = MeasureTextEx(font, "Top Scores", 60, 5);
+    DrawTextEx(font, "Top Scores", Vector2{ panel.x + panel.width / 2 - titleSize.x / 2, panel.y + 10 }, 60, 5, BLACK);
 
-    DrawTextEx(font, "Top Scores", Vector2{ 810, 450 }, 60, 5, BLACK);
+    DrawTextEx(font, "Rank", Vector2{ panel.x + 50, panel.y + 100 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Name", Vector2{ panel.x + 230, panel.y + 100 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Score", Vector2{ panel.x + 610, panel.y + 100 }, 30, 3, DARKGRAY);
+    DrawTextEx(font, "Level", Vector2{ panel.x + 820, panel.y + 100 }, 30, 3, DARKGRAY);
+    DrawLine(panel.x + 20, panel.y + 140, panel.x + panel.width - 20, panel.y + 140, BLACK);
 
-    DrawTextEx(font, "Rank", Vector2{ 550, 530 }, 30, 3, DARKGRAY);
-    DrawTextEx(font, "Name", Vector2{ 700, 530 }, 30, 3, DARKGRAY);
-    DrawTextEx(font, "Score", Vector2{ 1000, 530 }, 30, 3, DARKGRAY);
-    DrawTextEx(font, "Level", Vector2{ 1250, 530 }, 30, 3, DARKGRAY);
-    DrawLine(520, 570, 1400, 570, BLACK);
-
-    int yOffset = 580;
+    int yOffset = panel.y + 150;
     int rank = 1;
     for (const auto& entry : top_scores) {
-        DrawTextEx(font, TextFormat("%d", rank), Vector2{ 560, (float)yOffset }, 30, 2, BLACK);
-        DrawTextEx(font, entry.username.c_str(), Vector2{ 700, (float)yOffset }, 30, 2, BLACK);
-        DrawTextEx(font, TextFormat("%d", entry.score), Vector2{ 1000, (float)yOffset }, 30, 2, BLACK);
-        DrawTextEx(font, TextFormat("%d", entry.level), Vector2{ 1270, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, TextFormat("%d", rank), Vector2{ panel.x + 60, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, entry.username.c_str(), Vector2{ panel.x + 230, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, TextFormat("%d", entry.score), Vector2{ panel.x + 610, (float)yOffset }, 30, 2, BLACK);
+        DrawTextEx(font, TextFormat("%d", entry.level), Vector2{ panel.x + 820, (float)yOffset }, 30, 2, BLACK);
         yOffset += 40;
         rank++;
         if (rank > 8) break;
     }
 
-
-    Rectangle backBtn = { 760, 950, 400, 70 };
+    Rectangle backBtn = { panel.x + panel.width / 2 - 200, panel.y + panel.height - 90, 400, 70 };
     DrawRectangleRounded(backBtn, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-    DrawTextEx(font, "Return to menu", Vector2{ 820, 965 }, 40, 4, BLACK);
+    Vector2 backSize = MeasureTextEx(font, "Return to menu", 40, 4);
+    DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + backBtn.width / 2 - backSize.x / 2, backBtn.y + backBtn.height / 2 - backSize.y / 2 }, 40, 4, BLACK);
 
     if (CheckCollisionPointRec(mouse_pos, backBtn))
     {
         DrawRectangleRounded(backBtn, 0.3f, 0, GRAY);
         DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-        DrawTextEx(font, "Return to menu", Vector2{ 820, 965 }, 40, 4, BLACK);
+        DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + backBtn.width / 2 - backSize.x / 2, backBtn.y + backBtn.height / 2 - backSize.y / 2 }, 40, 4, BLACK);
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON)) {
             scores = false;
             scores_loaded = false;
@@ -347,7 +362,8 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     DrawRectangleRounded(panel, 0.2f, 0, RAYWHITE);
     DrawRectangleRoundedLines(panel, 0.2f, 6, BLACK);
 
-    DrawTextEx(font, "Settings", Vector2{ panel.x + 410, panel.y + 30 }, 60, 6, BLACK);
+    Vector2 settingsTitle = MeasureTextEx(font, "Settings", 60, 6);
+    DrawTextEx(font, "Settings", Vector2{ panel.x + panel.width / 2 - settingsTitle.x / 2, panel.y + 30 }, 60, 6, BLACK);
 
     float y = panel.y + 120;
     float xLabel = panel.x + 40;
@@ -374,13 +390,14 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     DrawRectangleRounded(backBtn, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
 
-    DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 110, backBtn.y + 20 }, 40, 4, BLACK);
+    Vector2 backSize = MeasureTextEx(font, "Return to menu", 40, 4);
+    DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + backBtn.width / 2 - backSize.x / 2, backBtn.y + backBtn.height / 2 - backSize.y / 2 }, 40, 4, BLACK);
 
     if (CheckCollisionPointRec(mouse_pos, backBtn))
     {
         DrawRectangleRounded(backBtn, 0.3f, 0, GRAY);
         DrawRectangleRoundedLines(backBtn, 0.3f, 6, BLACK);
-        DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + 110, backBtn.y + 20 }, 40, 4, BLACK);
+        DrawTextEx(font, "Return to menu", Vector2{ backBtn.x + backBtn.width / 2 - backSize.x / 2, backBtn.y + backBtn.height / 2 - backSize.y / 2 }, 40, 4, BLACK);
 
         if (IsMouseButtonReleased(MOUSE_LEFT_BUTTON))
         {
@@ -404,7 +421,8 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(start_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Start game", start_game_pos, 40, 4, BLACK);
+            Vector2 ts = MeasureTextEx(font, "Start game", 40, 4);
+            DrawTextEx(font, "Start game", Vector2{ start_button.x + start_button.width / 2 - ts.x / 2, start_button.y + start_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) start_game = true;
         }
         else if (CheckCollisionPointRec(mouse_pos, scores_button))
@@ -412,7 +430,8 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(scores_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Scores", scores_pos_text, 40, 4, BLACK);
+            Vector2 ts = MeasureTextEx(font, "Scores", 40, 4);
+            DrawTextEx(font, "Scores", Vector2{ scores_button.x + scores_button.width / 2 - ts.x / 2, scores_button.y + scores_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
                 scores = true;
                 scores_loaded = false;
@@ -423,7 +442,8 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(keybindings_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Keybindings", keybindings_pos, 40, 4, BLACK);
+            Vector2 ts = MeasureTextEx(font, "Keybindings", 40, 4);
+            DrawTextEx(font, "Keybindings", Vector2{ keybindings_button.x + keybindings_button.width / 2 - ts.x / 2, keybindings_button.y + keybindings_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) keybindings = true;
         }
         else if (CheckCollisionPointRec(mouse_pos, settings_button))
@@ -431,7 +451,8 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(settings_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Settings", settings_pos, 40, 4, BLACK);
+            Vector2 ts = MeasureTextEx(font, "Settings", 40, 4);
+            DrawTextEx(font, "Settings", Vector2{ settings_button.x + settings_button.width / 2 - ts.x / 2, settings_button.y + settings_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) settings = true;
         }
         else if (CheckCollisionPointRec(mouse_pos, exit_button))
@@ -439,7 +460,8 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(exit_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Exit game", exit_pos, 40, 4, BLACK);
+            Vector2 ts = MeasureTextEx(font, "Exit game", 40, 4);
+            DrawTextEx(font, "Exit game", Vector2{ exit_button.x + exit_button.width / 2 - ts.x / 2, exit_button.y + exit_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) exit_game = true;
         }
         else play_button_sound = true;
@@ -451,7 +473,8 @@ void Menu::check_button()
             if (play_button_sound) PlaySound(button_sound);
             play_button_sound = false;
             DrawRectangleRounded(return_button, 0.3f, 0, GRAY);
-            DrawTextEx(font, "Return to menu", return_pos, 50, 5, BLACK);
+            Vector2 ts = MeasureTextEx(font, "Return to menu", 50, 5);
+            DrawTextEx(font, "Return to menu", Vector2{ return_button.x + return_button.width / 2 - ts.x / 2, return_button.y + return_button.height / 2 - ts.y / 2 }, 50, 5, BLACK);
             if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) keybindings = false;
         }
         else play_button_sound = true;
@@ -488,11 +511,9 @@ void Menu::ending(Player& player, Levels& level_1, Levels& level_2)
     ClearBackground(RAYWHITE);
     DrawTextureRec(ending_background, ending_, Vector2{ 0, 0 }, color);
 
-    // Lógica de guardado de puntaje (Victoria)
     if (!score_saved && current_user_id != -1) {
         DbContext db;
         if (db.Connect()) {
-            // Nivel 2 completado -> Nivel alcanzado 2, IsCompleted = true
             db.InsertScore(current_user_id, player.score, 2, true);
             db.Disconnect();
         }
@@ -514,7 +535,7 @@ void Menu::ending(Player& player, Levels& level_1, Levels& level_2)
             start_game = false;
             level_1.completed = false;
             level_2.completed = false;
-            score_saved = false; 
+            score_saved = false;
         }
     }
     apply_video_settings();
