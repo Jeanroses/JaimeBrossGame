@@ -1,4 +1,5 @@
 #pragma once
+#include "raylib.h"
 #include "Levels.h"
 #include "DbContext.h"
 #include <vector>
@@ -25,7 +26,6 @@ public:
     Rectangle background_src = { 0, 0, 320, 180 };
     Rectangle background_disp = { 0, 0, 1920, 1080 };
 
- 
     Rectangle start_button = { 780, 460, 360, 80 };
     Rectangle scores_button = { 780, 560, 360, 80 };
     Rectangle keybindings_button = { 780, 660, 360, 80 };
@@ -41,7 +41,6 @@ public:
     Vector2 ending_pos1 = { 70, 200 };
     Vector2 ending_pos2 = { 230, 350 };
 
-   
     Vector2 start_game_pos = { 840, 485 };
     Vector2 scores_pos_text = { 900, 585 };
     Vector2 keybindings_pos = { 830, 685 };
@@ -67,7 +66,6 @@ public:
     int state = 0;
     float alpha = 1.0f;
 
-    // Estados
     bool login_screen = true;
     bool scores = false;
     bool keybindings = false;
@@ -77,10 +75,9 @@ public:
     bool init = true;
     bool pause_ = false;
 
-    // Variables para Login y Scores
-    char nameInput[16] = "\0"; 
+    char nameInput[16] = "\0";
     int inputLetterCount = 0;
-    int current_user_id = -1; 
+    int current_user_id = -1;
 
     std::vector<ScoreEntry> top_scores;
     bool scores_loaded = false;
@@ -89,7 +86,7 @@ public:
     float menu_volume = 0.06;
     float ending_volume = 0.07;
     float button_volume = 0.08;
-    float master_volume = 0.08f;
+    float master_volume = 0.15f; 
     bool vsync_enabled = true;
     bool fullscreen = true;
     bool show_fps = false;

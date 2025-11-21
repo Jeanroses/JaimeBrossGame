@@ -97,6 +97,7 @@ void Menu::init_animation()
 
 void Menu::draw_login()
 {
+    set_audio_volume(); // Aseguramos que el volumen bajo se aplique aquí
     UpdateMusicStream(menu_music);
 
     int key = GetCharPressed();
@@ -117,15 +118,27 @@ void Menu::draw_login()
         nameInput[inputLetterCount] = '\0';
     }
 
+    // LOGICA DE LOGIN
     if (IsKeyPressed(KEY_ENTER) && inputLetterCount > 0)
     {
         DbContext db;
+        std::cout << "Intentando conectar a SQL Server..." << std::endl;
+
         if (db.Connect()) {
+            std::cout << "Conectado. Registrando/Logueando usuario..." << std::endl;
             current_user_id = db.LoginOrRegister(std::string(nameInput));
             db.Disconnect();
+
+            if (current_user_id != -1) {
+                std::cout << "Login exitoso. ID: " << current_user_id << std::endl;
+                login_screen = false;
+            }
+            else {
+                std::cout << "Error: Login devolvio ID -1" << std::endl;
+            }
         }
-        if (current_user_id != -1) {
-            login_screen = false; 
+        else {
+            std::cout << "Fallo la conexion inicial a la BD." << std::endl;
         }
     }
 
@@ -148,8 +161,9 @@ void Menu::draw_login()
 
     if (inputLetterCount < 15)
     {
+        // Corrección de la línea punteada (cursor) usando MeasureTextEx para precisión
         if ((framesCounter / 20) % 2 == 0)
-            DrawText("|", (int)textBox.x + 15 + MeasureText(nameInput, 40), (int)textBox.y + 12, 40, BLACK);
+            DrawText("|", (int)textBox.x + 15 + (int)MeasureTextEx(font, nameInput, 40, 4).x, (int)textBox.y + 12, 40, BLACK);
     }
     framesCounter++;
 
