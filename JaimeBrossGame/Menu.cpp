@@ -153,6 +153,7 @@ void Menu::draw_login()
             if (current_user_id > 0) {
                 loginMessage = ""; // Limpiar mensaje en éxito
                 login_screen = false;
+                init = false;
             } else if (current_user_id == -2) {
                 loginMessage = "Invalid username or password";
             } else {

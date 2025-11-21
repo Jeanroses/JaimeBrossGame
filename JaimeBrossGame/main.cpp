@@ -20,19 +20,29 @@ int main()
 
     PlayMusicStream(menu.menu_music);
 
-    while (menu.login_screen && !menu.exit_game)
-    {
-        BeginDrawing();
-        menu.draw_login();
-        EndDrawing();
-        if (WindowShouldClose()) menu.exit_game = true;
-    }
-
-    while (menu.init && !menu.exit_game)
-        menu.init_animation();
-
+    // ===== BUCLE PRINCIPAL UNIFICADO =====
     while (!menu.exit_game)
     {
+        // Verificar si se debe cerrar la ventana
+        if (WindowShouldClose()) menu.exit_game = true;
+
+        // ===== ANIMACIÓN INICIAL =====
+        if (menu.init)
+        {
+            menu.init_animation();
+            continue; // Salta al siguiente frame
+        }
+
+        // ===== PANTALLA DE LOGIN =====
+        if (menu.login_screen)
+        {
+            BeginDrawing();
+            menu.draw_login();
+            EndDrawing();
+            continue; // Salta al siguiente frame
+        }
+
+        // ===== GESTIÓN DE MÚSICA =====
         if (!menu.start_game && !level_2.completed)
         {
             if (!IsMusicStreamPlaying(menu.menu_music)) PlayMusicStream(menu.menu_music);
@@ -67,8 +77,10 @@ int main()
             UpdateMusicStream(menu.ending_music);
         }
 
+        // ===== RENDERIZADO =====
         BeginDrawing();
 
+        // MENÚ PRINCIPAL
         if (!menu.start_game)
         {
             if (menu.settings)
@@ -84,9 +96,10 @@ int main()
             player.set_pos1();
             menu.reset_lvl(level_1, level_2);
             enemies.reset_enemies();
-
             menu.apply_master_volume(player, level_1, level_2);
         }
+
+        // JUEGO
         if (menu.start_game && !level_2.completed)
         {
             BeginMode2D(player.camera);
@@ -100,6 +113,7 @@ int main()
                 level_2.draw_saw();
             }
             player.draw_ui();
+
             if (!menu.pause_)
             {
                 player.check_input();
@@ -142,11 +156,14 @@ int main()
                     }
                 }
             }
+
             menu.pause();
             menu.pause_draw(player, level_1, level_2);
 
             EndMode2D();
         }
+
+        // PANTALLA FINAL
         if (level_2.completed)
             menu.ending(level_1, level_2);
 
