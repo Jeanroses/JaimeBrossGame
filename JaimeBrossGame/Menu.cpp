@@ -482,11 +482,23 @@ void Menu::pause_draw(Player& player, Levels& level_1, Levels& level_2)
     if (pause_) apply_video_settings();
 }
 
-void Menu::ending(Levels& level_1, Levels& level_2)
+void Menu::ending(Player& player, Levels& level_1, Levels& level_2)
 {
     UpdateMusicStream(ending_music);
     ClearBackground(RAYWHITE);
     DrawTextureRec(ending_background, ending_, Vector2{ 0, 0 }, color);
+
+    // Lógica de guardado de puntaje (Victoria)
+    if (!score_saved && current_user_id != -1) {
+        DbContext db;
+        if (db.Connect()) {
+            // Nivel 2 completado -> Nivel alcanzado 2, IsCompleted = true
+            db.InsertScore(current_user_id, player.score, 2, true);
+            db.Disconnect();
+        }
+        score_saved = true;
+    }
+
     if (color.a < 255) color.a++;
     if (color.a == 255)
     {
@@ -498,9 +510,11 @@ void Menu::ending(Levels& level_1, Levels& level_2)
             StopMusicStream(level_2.level2_music);
             StopMusicStream(ending_music);
             if (!IsMusicStreamPlaying(menu_music)) PlayMusicStream(menu_music);
+
             start_game = false;
             level_1.completed = false;
             level_2.completed = false;
+            score_saved = false; 
         }
     }
     apply_video_settings();

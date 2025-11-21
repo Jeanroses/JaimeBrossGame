@@ -9,7 +9,6 @@ struct ScoreEntry {
     int level;
 };
 
-// Protecciones para evitar conflictos entre Windows.h y Raylib
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
 #define NOUSER
@@ -18,7 +17,6 @@ struct ScoreEntry {
 #include <sqltypes.h>
 #include <sql.h>
 
-// Des-definir macros conflictivas
 #undef PlaySound
 #undef DrawText
 #undef DrawTextEx
@@ -34,9 +32,9 @@ private:
     SQLHSTMT hStmt;
     SQLRETURN retcode;
 
-    // Cadena de conexión CORREGIDA con la barra invertida escapada
-    std::wstring connectionString = L"Driver={ODBC Driver 17 for SQL Server};"
-        L"Server=LAPTOP-645QQ1GG\\SQLEXPRESS;" // <-- ¡AQUÍ ESTÁ EL CAMBIO!
+    // Cadena de conexión 
+    std::wstring connectionString = L"Driver={ODBC Driver 18 for SQL Server};"
+        L"Server=DESKTOP-U2NJFRP\\SQLEXPRESS;"
         L"Database=DB_JaimeBrossGame;"
         L"Trusted_Connection=Yes;"
         L"TrustServerCertificate=Yes;";
@@ -50,7 +48,6 @@ public:
     bool Connect();
     void Disconnect();
 
-    // Método actualizado para Login/Registro con contraseña
     int LoginOrRegister(std::string username, std::string password);
 
     bool InsertScore(int userId, int scoreValue, int levelReached, bool isCompleted);

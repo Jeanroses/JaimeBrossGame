@@ -20,29 +20,25 @@ int main()
 
     PlayMusicStream(menu.menu_music);
 
-    // ===== BUCLE PRINCIPAL UNIFICADO =====
     while (!menu.exit_game)
     {
-        // Verificar si se debe cerrar la ventana
         if (WindowShouldClose()) menu.exit_game = true;
 
-        // ===== ANIMACIÓN INICIAL =====
         if (menu.init)
         {
             menu.init_animation();
-            continue; // Salta al siguiente frame
+            continue;
         }
 
-        // ===== PANTALLA DE LOGIN =====
         if (menu.login_screen)
         {
             BeginDrawing();
             menu.draw_login();
             EndDrawing();
-            continue; // Salta al siguiente frame
+            continue;
         }
 
-        // ===== GESTIÓN DE MÚSICA =====
+        // ... (Gestión de música igual) ...
         if (!menu.start_game && !level_2.completed)
         {
             if (!IsMusicStreamPlaying(menu.menu_music)) PlayMusicStream(menu.menu_music);
@@ -77,10 +73,8 @@ int main()
             UpdateMusicStream(menu.ending_music);
         }
 
-        // ===== RENDERIZADO =====
         BeginDrawing();
 
-        // MENÚ PRINCIPAL
         if (!menu.start_game)
         {
             if (menu.settings)
@@ -99,7 +93,6 @@ int main()
             menu.apply_master_volume(player, level_1, level_2);
         }
 
-        // JUEGO
         if (menu.start_game && !level_2.completed)
         {
             BeginMode2D(player.camera);
@@ -118,6 +111,7 @@ int main()
             {
                 player.check_input();
                 player.manage_input();
+
                 if (!level_1.completed)
                 {
                     enemies.manage_birds();
@@ -128,14 +122,23 @@ int main()
                         level_1.manage_death(player, enemies);
                         if (player.lives <= 0)
                         {
+                            if (menu.current_user_id != -1) {
+                                DbContext db;
+                                if (db.Connect()) {
+                                    db.InsertScore(menu.current_user_id, player.score, 1, false);
+                                    db.Disconnect();
+                                }
+                            }
+
                             menu.reset_lvl(level_1, level_2);
                             level_1.completed = false;
-                            player.set_pos1();
+                            player.set_pos1(); 
                             enemies.reset_enemies();
                             level_1.reset_music();
                         }
                     }
                 }
+
                 if (level_1.completed)
                 {
                     enemies.manage_spiders();
@@ -147,6 +150,14 @@ int main()
                         level_2.manage_death(player, enemies);
                         if (player.lives <= 0)
                         {
+                            if (menu.current_user_id != -1) {
+                                DbContext db;
+                                if (db.Connect()) {
+                                    db.InsertScore(menu.current_user_id, player.score, 2, false);
+                                    db.Disconnect();
+                                }
+                            }
+
                             menu.reset_lvl(level_1, level_2);
                             level_1.completed = false;
                             player.set_pos1();
@@ -163,9 +174,8 @@ int main()
             EndMode2D();
         }
 
-        // PANTALLA FINAL
         if (level_2.completed)
-            menu.ending(level_1, level_2);
+            menu.ending(player, level_1, level_2); 
 
         if (menu.show_fps) DrawFPS(10, 10);
 
