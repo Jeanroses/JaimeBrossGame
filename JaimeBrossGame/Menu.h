@@ -40,14 +40,13 @@ public:
     Music ending_music = LoadMusicStream("resources/audio/music/ending.mp3");
     Sound button_sound = LoadSound("resources/audio/sound/button.wav");
     Texture2D ending_background = LoadTexture("resources/ending.png");
-    Texture2D menu_background1 = LoadTexture("resources/graphics/backgrounds/sky_background1.png");
-    Texture2D menu_background2 = LoadTexture("resources/graphics/backgrounds/sky_background2.png");
+    Texture2D menu_background1 = LoadTexture("resources/graphics/backgrounds/backgroundMenu.png");
     Texture2D logo = LoadTexture("resources/logo.png");
 
     Rectangle ending_ = { 0, 0, 1920, 1080 };
     Rectangle logo_src = { 0, 0, 64, 48 };
     Rectangle logo_disp = { 700, 30, 500, 400 };
-    Rectangle background_src = { 0, 0, 320, 180 };
+    Rectangle background_src = { 0, 0, 1920, 1080 };
     Rectangle background_disp = { 0, 0, 1920, 1080 };
 
     Rectangle start_button = { 780, 460, 360, 80 };

@@ -163,9 +163,8 @@ void Menu::draw_login()
         }
     }
 
-    ClearBackground(SKYBLUE);
+    ClearBackground(BLACK);
     DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
-    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
     Rectangle panel = { 660, 450, 600, 450 };
@@ -222,9 +221,8 @@ void Menu::draw()
     UpdateMusicStream(menu_music);
     mouse_pos = GetMousePosition();
 
-    ClearBackground(SKYBLUE);
+    ClearBackground(BLACK);
     DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
-    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
     DrawRectangleRounded(start_button, 0.3f, 0, RAYWHITE);
@@ -251,7 +249,7 @@ void Menu::draw()
     ts = MeasureTextEx(font, "Exit game", 40, 4);
     DrawTextEx(font, "Exit game", Vector2{ exit_button.x + exit_button.width / 2 - ts.x / 2, exit_button.y + exit_button.height / 2 - ts.y / 2 }, 40, 4, BLACK);
 
-    DrawTextEx(font, TextFormat("Player: %s", nameInput), Vector2{ 20, 20 }, 30, 3, WHITE);
+    DrawTextEx(font, TextFormat("Player: %s", nameInput), Vector2{ 20, 40 }, 30, 3, BLACK);
 
     apply_video_settings();
 }
@@ -260,9 +258,8 @@ void Menu::draw_keybindings()
 {
     UpdateMusicStream(menu_music);
     mouse_pos = GetMousePosition();
-    ClearBackground(SKYBLUE);
+    ClearBackground(BLACK);
     DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
-    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
     DrawRectangleRounded(return_button, 0.3f, 0, RAYWHITE);
     DrawRectangleRoundedLines(return_button, 0.3f, 6, BLACK);
@@ -294,9 +291,8 @@ void Menu::draw_scores()
         scores_loaded = true;
     }
 
-    ClearBackground(SKYBLUE);
+    ClearBackground(BLACK);
     DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
-    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
     Rectangle panel = { 410, 430, 1100, 500 };
@@ -353,9 +349,8 @@ void Menu::draw_settings(Player& player, Levels& level_1, Levels& level_2)
     UpdateMusicStream(menu_music);
 
     mouse_pos = GetMousePosition();
-    ClearBackground(SKYBLUE);
+    ClearBackground(BLACK);
     DrawTexturePro(menu_background1, background_src, background_disp, origin, 0, RAYWHITE);
-    DrawTexturePro(menu_background2, background_src, background_disp, origin, 0, RAYWHITE);
     DrawTexturePro(logo, logo_src, logo_disp, origin, 0, RAYWHITE);
 
     Rectangle panel = { 360, 450, 1200, 550 };
