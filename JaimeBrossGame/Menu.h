@@ -73,9 +73,9 @@ public:
     Vector2 return_pos = { 700, 875 };
     Vector2 pause_pos = { 0, 0 };
     Vector2 pause_pos2 = { 0, 0 };
-    Vector2 movement_pos = { 625, 670 };
-    Vector2 sprint_pos = { 950 , 670 };
-    Vector2 jump_pos = { 1200, 670 };
+    Vector2 movement_pos = { 712, 670 };
+    Vector2 sprint_pos = { 1012, 670 };
+    Vector2 jump_pos = { 1244, 670 };
     Vector2 origin = { 0, 0 };
 
     int logoPositionX = 832;
